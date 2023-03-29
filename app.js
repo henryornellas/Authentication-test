@@ -19,16 +19,19 @@ app.use(bodyParser.urlencoded({
 
 //Express-session module setup
 app.use(session({
-  secret: 'henrysheipado',
+  secret: process.env.SECRET,
   resave: false,
   saveUninitialized: false
 }));
 
+//Passport and mongoDB ATLAS setup
 app.use(passport.initialize());
 app.use(passport.session());
 
-mongoose.connect('mongodb://127.0.0.1:27017/userDB');
+mongoose.connect('mongodb+srv://henry:123@cluster0.807wml5.mongodb.net/userDB');
 
+
+//Mongoose Schema setup
 const userSchema = new mongoose.Schema({
   email: String,
   password: String,
@@ -36,6 +39,7 @@ const userSchema = new mongoose.Schema({
   secret: String
 });
 
+//Passport setup serialize and deserialize
 userSchema.plugin(passportLocalMongoose);
 userSchema.plugin(findOrCreate);
 
@@ -55,6 +59,8 @@ passport.deserializeUser(function(user, cb) {
   });
 });
 
+
+//Google Auth API
 passport.use(new GoogleStrategy({
     clientID: process.env.CLIENt_ID,
     clientSecret: process.env.CLIENT_SECRET,
@@ -67,12 +73,15 @@ passport.use(new GoogleStrategy({
   }
 ));
 
+
+//Home route
 app.get('/', function(req, res) {
   res.render('home');
 });
 
 app.get('/auth/google', passport.authenticate('google', { scope: ['profile'] }));
 
+//Google authentication
 app.get('/auth/google/secrets',
   passport.authenticate('google', { failureRedirect: '/login' }),
   function(req, res) {
@@ -88,6 +97,8 @@ app.get('/register', function(req, res) {
   res.render('register');
 });
 
+
+//Finds all users with secrets and passes them to be rendered in /secrets
 app.get('/secrets', function(req, res) {
   User.find({'secret': {$ne: null}}).then(function(foundUsers, err){
     if(err){
@@ -100,6 +111,8 @@ app.get('/secrets', function(req, res) {
   });
 });
 
+
+//Checks to see if user is authenticated before accessing /submit
 app.get('/submit', function(req, res){
   if (req.isAuthenticated()) {
     res.render('submit');
@@ -108,6 +121,8 @@ app.get('/submit', function(req, res){
   }
 });
 
+
+//Saves what was typed as the user's secret and redirects to /secrets
 app.post('/submit', function(req, res){
   const submitedSecret = req.body.secret;
 
@@ -125,6 +140,8 @@ app.post('/submit', function(req, res){
   });
 });
 
+
+//Logs out (??
 app.get('/logout', function(req, res) {
   req.logout(function(err) {
     if (err) {
@@ -135,6 +152,8 @@ app.get('/logout', function(req, res) {
   });
 });
 
+
+//Local registering with passport
 app.post('/register', function(req, res) {
   User.register({
     username: req.body.username
@@ -150,6 +169,8 @@ app.post('/register', function(req, res) {
   });
 });
 
+
+//Logs user
 app.post('/login', function(req, res) {
   const user = new User({
     username: req.body.username,
@@ -170,8 +191,7 @@ app.post('/login', function(req, res) {
 
 
 
-
-
+//Server port
 app.listen(3000, function() {
   console.log('WORKING');
 });
