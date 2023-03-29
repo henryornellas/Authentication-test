@@ -192,6 +192,6 @@ app.post('/login', function(req, res) {
 
 
 //Server port
-app.listen(3000, function() {
+app.listen(process.env.PORT || 3000, function() {
   console.log('WORKING');
 });
